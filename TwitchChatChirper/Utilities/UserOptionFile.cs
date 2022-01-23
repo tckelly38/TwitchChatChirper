@@ -49,8 +49,6 @@ namespace TwitchChatChirper.Utilities
         /// if the field does exist then we will "update" that field (under the hood we literally rewrite
         /// the enitre file to make that update :))
         /// 
-        /// we also update the global config cache for quicker access that doesnt rely on file reading
-        /// 
         /// will add or update line in file to look like <field:value>
         /// </summary>
         /// <param name="field">key value or field you want to set</param>
