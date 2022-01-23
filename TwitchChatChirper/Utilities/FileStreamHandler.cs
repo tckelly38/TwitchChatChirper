@@ -4,7 +4,7 @@ using System.IO;
 namespace TwitchChatChirper.Utilities
 {
     /// <summary>
-    /// this is a low level class that allows to interact with the file
+    /// this is a low level class that allows us to interact with the file
     /// </summary>
     internal class FileStreamHandler
     {
