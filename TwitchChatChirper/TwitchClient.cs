@@ -42,10 +42,7 @@ namespace TwitchChatChirper
         /// </summary>
         TcpClient m_TcpClient;
 
-        /// <summary>
-        /// How we interact with user options file for this mod
-        /// </summary>
-        readonly UserOptionFile m_UserOptionFile;
+        UserOptionFile m_UserOptionFile;
 
         public TwitchClient()
         {
@@ -78,8 +75,18 @@ namespace TwitchChatChirper
         /// <returns> whether connection was successful</returns>
         public bool AttemptConnect()
         {
+            // if any of the user fields are empty we need to not attempt a connection
+            string oAuthPassword = m_UserOptionFile.GetField(UserOptionFile.Field.OAuthPassword);
+            string username = m_UserOptionFile.GetField(UserOptionFile.Field.Username);
+            string channel = m_UserOptionFile.GetField(UserOptionFile.Field.Channel);
+
+            if (oAuthPassword.IsNullOrWhiteSpace() || username.IsNullOrWhiteSpace() || channel.IsNullOrWhiteSpace())
+            {
+                return false;
+            }
+
             // ensure we are at a good starting point by closing / resetting all streams and clients 
-            CloseAll();
+            //CloseAll();
 
             // establish connection with twitch IRC endpoint
             m_TcpClient = new TcpClient();
@@ -96,14 +103,19 @@ namespace TwitchChatChirper
             // establish read and write streams to interact with chat
             m_StreamReader = new StreamReader(m_TcpClient.GetStream());
             m_StreamWriter = new StreamWriter(m_TcpClient.GetStream()) { NewLine = "\r\n", AutoFlush = true }; // note: irc requires message lines end with \r\n
-
             // a network stream will allow us to check for content on stream w/o blocking
             m_NetworkStream = m_TcpClient.GetStream();
+            
+            if (m_StreamReader == null || m_StreamWriter == null)
+            {
+                Debug.Log("streams invalid");
+                return false;
+            }
 
             // twitch chat irc requires these details be sent in this order
-            m_StreamWriter.WriteLine("PASS " + m_UserOptionFile.GetField(UserOptionFile.Field.OAuthPassword));
-            m_StreamWriter.WriteLine("NICK " + m_UserOptionFile.GetField(UserOptionFile.Field.Username));
-            m_StreamWriter.WriteLine("JOIN #" + m_UserOptionFile.GetField(UserOptionFile.Field.Channel));
+            m_StreamWriter.WriteLine("PASS " + oAuthPassword);
+            m_StreamWriter.WriteLine("NICK " + username);
+            m_StreamWriter.WriteLine("JOIN #" + channel);
             m_StreamWriter.Flush();
 
             // after we write the above lines to the irc end point our response will look like this:
@@ -121,13 +133,16 @@ namespace TwitchChatChirper
             // we want to get past these responses so remove them from the stream
             // that we ensure we start reading twitch chat message immediately upon loading
             //
-            // ReadLine() BLOCKS! there is a potential here that this will hang...
-            // TODO: come up with better strategy
-            while (!m_StreamReader.ReadLine().Contains("366"))
+            // check if there is any response after above, if so then we want to read line by line until 
+            // we get the 366 resposne, at which point we can return true
+            while(!m_StreamReader.ReadLine().Contains("366"))
             {
-                continue;
-            }
             
+            }
+
+            //Singleton<ChirpPanel>.instance.AddMessage(new ChirperMessage(1, "Admin", "Connection Failed!"), true);
+            Debug.Log("connection successful");
+
             return true;
         }
 
@@ -154,8 +169,6 @@ namespace TwitchChatChirper
                                   // deserves more testing
             {
                 Debug.Log("IO ERROR OCCURRED: " + e.Message);
-                Debug.Log("Attempting to reconnect");
-                AttemptConnect();
                 return;
             }
             catch (OutOfMemoryException e)

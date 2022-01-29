@@ -34,7 +34,7 @@ namespace TwitchChatChirper.Utilities
             int lineNo = GetLineNumber(field);
             if (lineNo > -1)
             {
-                LineChanger(newLine, lineNo);
+                LineChanger(field + ":" + newLine, lineNo);
             }
 
         }
@@ -50,12 +50,13 @@ namespace TwitchChatChirper.Utilities
 
             for (int i = 0; i < arrLine.Length; i++)
             {
-                if (arrLine[i].Contains(field))
+                string[] tmpLine = arrLine[i].Split(new[] { ':' }, 2);
+                if (tmpLine.Length > 1 && tmpLine[0] == field)
                 {
-                    return arrLine[i].Split(new[] { ':' }, 2)[1];
+                    return tmpLine[1];
                 }
             }
-            return "";
+            return null;
         }
 
         /// <summary>
@@ -76,6 +77,11 @@ namespace TwitchChatChirper.Utilities
             {
                 File.Create(m_file).Close();
             }
+        }
+
+        public void EraseFile()
+        { 
+            File.WriteAllText(m_file, "");
         }
 
         /// <summary>
@@ -102,7 +108,8 @@ namespace TwitchChatChirper.Utilities
 
             for (int i = 0; i < arrLine.Length; i++)
             {
-                if (arrLine[i].Contains(field))
+                string[] line = arrLine[i].Split(new[] { ':' }, 2);
+                if (line.Length > 0 && line[0] == field)
                     return i;
             }
             return -1;

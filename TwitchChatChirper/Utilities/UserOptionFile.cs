@@ -2,6 +2,7 @@
 
 namespace TwitchChatChirper.Utilities
 {
+
     /// <summary>
     /// This class essentially acts as a wrapper for the FileStreamHandler class
     /// we write and read information from the config file related to the user entered
@@ -14,6 +15,9 @@ namespace TwitchChatChirper.Utilities
         /// </summary>
         private FileStreamHandler m_FileStreamHandler;
 
+
+        public string m_OauthValue, m_usernameValue, m_ChannelValue;
+
         /// <summary>
         /// each entry coorelatates with a field in the config file
         /// </summary>
@@ -23,6 +27,7 @@ namespace TwitchChatChirper.Utilities
             Username,
             Channel
         }
+
         /// <summary>
         /// establish the file stream reader
         /// creates file (if DNE, then create, o.w. do nothing)
@@ -31,6 +36,8 @@ namespace TwitchChatChirper.Utilities
         {
             m_FileStreamHandler = new FileStreamHandler(GlobalConfiguration.m_FileLocation);
         }
+
+       
         /// <summary>
         /// retrieve the requested info from the file
         /// </summary>
@@ -57,10 +64,19 @@ namespace TwitchChatChirper.Utilities
         public void SetField(Field field, string value)
         {
             // TODO: should we sha256 oauth password field?
-            if (GetField(field) == "")
-                m_FileStreamHandler.AppendLine(field.ToString() + ":" + value);
+            if (GetField(field) == null)
+                m_FileStreamHandler.AppendLine(field.ToString() + ":" + value.Trim());
             else
-                m_FileStreamHandler.UpdateField(field.ToString(), value);
+                m_FileStreamHandler.UpdateField(field.ToString(), value.Trim());
+        }
+        
+
+        public void UpdateFile()
+        {
+            //m_FileStreamHandler.EraseFile();
+            SetField(Field.OAuthPassword, m_OauthValue);
+            SetField(Field.Username, m_usernameValue);
+            SetField(Field.Channel, m_ChannelValue);
         }
     }
 }

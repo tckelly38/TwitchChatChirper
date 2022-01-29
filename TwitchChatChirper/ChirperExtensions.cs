@@ -54,6 +54,7 @@ namespace TwitchChatChirper
         public override void OnUpdate()
         {
             base.OnUpdate();
+            
             // only attempt to read from stream if connection was sucessful
             if (!successfulConnection)
                 return;
